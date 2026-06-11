@@ -1,9 +1,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-const SUPABASE_URL = 'https://yvmectogsvqxlwhrwsta.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_xIxGFD06DRyG3z0qSjqc8w_iuMQQWO3';
-const clientSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let clientSupabase = null;
 
 const CUSTOMERS = ["AL ADAWY ALUSEAL", "AL OTHMAN", "AL-SAMA CONTRACTING", "ALIO ONE", "ALPA", "ALPHA GLASS", "ALU ADAMS", "ALU M", "ALU NILE", "ALU PRO", "ALU SKY", "AMACO", "AMAZON", "ARKAN PALM", "AXIS EGYPT", "BETA MAX", "BUILDORA", "CAPITAL COMPANY", "DELEMAR DPG", "DIAMOND FACTORY FOR ALUMINIUM", "EAGLE COMPANY", "EL MAJED", "EL SAFA", "ELITE COMPANY", "ELITE-ELFATH", "EMAD MOHAMED", "EUROPEAN GROUP FOR DECORATION", "FALCON METAL", "GLASS TECH", "GOLDEN LINE", "GOLDEN METAL", "GREEN MASS", "INFINITY KHALED HASBALLAH", "INTAL", "ISLAM HASABALLAH", "JAICO", "KAMAL AHMED COMPANY", "KEMET AIRPORT", "Khafaga Group", "MAADEN MISR", "MASS BUILDING", "METAL FOR ALUMINUM SYSTEM", "METALO", "MINERALS", "Mohamed El Ghamry", "OMSI GROUP", "PENTA FACADE SOLUTION", "PILLAR DORRA", "PURE VISION COMPANY", "SECTION", "SMART WINDOW", "SYSTEM", "Saint Gobain", "Supremo", "T TRACK", "TRIFLEX", "ULTRA SYSTEM", "VIKING COMPANY", "VIVENT DESIGN", "الحاج وجدى", "العالمية", "المجموعة الهندسية", "ايجيبل العالمية", "شركة الراعي", "شركة المطاوع للمقاولات", "شركة النيل"];
 const USERS = ["Abdel Rahman Sayed Magdy Aly ", "Abdo Bakry Abd EL Atie Abd EL Hameed", "Mohamed Emad Aidrousi", "Ramadan Mohamed Ramadan", "Salah Eldin Gamal ", "Sherif Dahy Abdullah "];
@@ -131,8 +129,10 @@ window.addEntry = async function() {
     }
 
     try {
-        const { error } = await clientSupabase.from('wms_records').insert([entry]);
-        if(error) throw error;
+        if (clientSupabase) {
+            const { error } = await clientSupabase.from('wms_records').insert([entry]);
+            if(error) throw error;
+        }
         
         localData.unshift(entry);
         renderCharts(localData);
@@ -157,11 +157,19 @@ async function init() {
     if(userDatalist) userDatalist.innerHTML = USERS.map(u => `<option value="${u}">`).join('');
 
     try {
-        const { data, error } = await clientSupabase.from('wms_records').select('*');
-        if(!error && data && data.length > 0) {
-            localData = data;
+        if (window.supabase && typeof window.supabase.createClient === 'function') {
+            const SUPABASE_URL = 'https://yvmectogsvqxlwhrwsta.supabase.co';
+            const SUPABASE_KEY = 'sb_publishable_xIxGFD06DRyG3z0qSjqc8w_iuMQQWO3';
+            clientSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            
+            const { data, error } = await clientSupabase.from('wms_records').select('*');
+            if(!error && data && data.length > 0) {
+                localData = data;
+            }
+            document.getElementById('status-text').innerText = 'Connected';
+        } else {
+            document.getElementById('status-text').innerText = 'Local Mode';
         }
-        document.getElementById('status-text').innerText = 'Connected';
     } catch (e) {
         document.getElementById('status-text').innerText = 'Local Mode';
     }
